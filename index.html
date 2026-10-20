@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Quote Submission – SAP Finance AI</title>
+
+  <!-- No external dependencies — submissions open a pre-filled email via mailto: -->
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "72", "72full", Arial, Helvetica, sans-serif;
+      background: #f5f6f7;
+      color: #32363a;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 16px 64px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+      max-width: 620px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .card-header {
+      background: #0070f2;
+      padding: 36px 40px 32px;
+      color: #fff;
+    }
+    .card-header .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      opacity: 0.80;
+      margin-bottom: 8px;
+    }
+    .card-header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+    .card-header p {
+      font-size: 14px;
+      line-height: 1.6;
+      opacity: 0.88;
+    }
+
+    /* Body */
+    .card-body { padding: 36px 40px 40px; }
+
+    /* Example quotes */
+    .examples-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #6a6d70;
+      margin-bottom: 14px;
+    }
+
+    .quote-examples {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .quote-example {
+      background: #f0f6ff;
+      border-left: 3px solid #0070f2;
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      font-size: 13.5px;
+      color: #354a5e;
+      line-height: 1.55;
+      font-style: italic;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .quote-example:hover {
+      background: #ddeeff;
+      border-color: #0057c2;
+    }
+    .quote-example .use-hint {
+      display: block;
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 600;
+      color: #0070f2;
+      margin-top: 6px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .quote-example:hover .use-hint { opacity: 1; }
+
+    /* Divider */
+    .divider {
+      border: none;
+      border-top: 1px solid #e5e5e5;
+      margin-bottom: 28px;
+    }
+
+    /* Form fields */
+    .form-group { margin-bottom: 22px; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #32363a;
+      margin-bottom: 7px;
+    }
+    label .required { color: #bb0000; margin-left: 3px; }
+
+    textarea, input[type="text"], input[type="email"] {
+      width: 100%;
+      border: 1.5px solid #c8cacc;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #32363a;
+      background: #fff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      font-family: inherit;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 110px;
+      line-height: 1.55;
+    }
+    textarea:focus, input:focus {
+      border-color: #0070f2;
+      box-shadow: 0 0 0 3px rgba(0, 112, 242, 0.12);
+    }
+    textarea::placeholder, input::placeholder { color: #a9abac; }
+
+    /* Checkbox */
+    .checkbox-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #fafafa;
+      border: 1.5px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 28px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .checkbox-group:hover { border-color: #0070f2; background: #f0f6ff; }
+    .checkbox-group input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      min-width: 18px;
+      height: 18px;
+      border: 2px solid #8696a9;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      margin-top: 1px;
+      transition: background 0.15s, border-color 0.15s;
+      position: relative;
+    }
+    .checkbox-group input[type="checkbox"]:checked {
+      background: #0070f2;
+      border-color: #0070f2;
+    }
+    .checkbox-group input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 3px;
+      top: 1px;
+      width: 8px;
+      height: 11px;
+      border: 2.5px solid #fff;
+      border-left: none;
+      border-top: none;
+      transform: rotate(40deg);
+    }
+    .checkbox-label {
+      font-size: 13px;
+      color: #354a5e;
+      line-height: 1.55;
+      cursor: pointer;
+    }
+    .checkbox-label strong { color: #32363a; }
+
+    /* Submit button states */
+    .btn-submit {
+      width: 100%;
+      background: #0070f2;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      padding: 14px 24px;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s, transform 0.1s;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .btn-submit:hover:not(:disabled) { background: #0057c2; }
+    .btn-submit:active:not(:disabled) { transform: scale(0.985); }
+    .btn-submit:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    /* Spinner */
+    .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2.5px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error banner */
+    .error-banner {
+      display: none;
+      background: #fff3f3;
+      border: 1.5px solid #e8b4b4;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #9e2020;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* Success message */
+    .success-msg {
+      display: none;
+      text-align: center;
+      padding: 48px 24px;
+    }
+    .success-msg .check-icon {
+      width: 60px; height: 60px;
+      background: #e6f4ea;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px;
+      font-size: 30px;
+      color: #1a7f3c;
+    }
+    .success-msg h2 { font-size: 20px; margin-bottom: 10px; color: #1a7f3c; }
+    .success-msg p { font-size: 14px; color: #6a6d70; line-height: 1.6; }
+
+    /* Footer note */
+    .footer-note {
+      margin-top: 20px;
+      font-size: 11.5px;
+      color: #9da1a4;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 480px) {
+      .card-header, .card-body { padding-left: 24px; padding-right: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <div class="eyebrow">SAP Finance AI</div>
+    <h1>Share Your Quote</h1>
+    <p>Tell us how SAP Finance AI is helping your organization — your words may inspire others and amplify your story.</p>
+  </div>
+
+  <div class="card-body">
+
+    <div id="form-section">
+      <!-- Example quotes -->
+      <div class="examples-label">Need inspiration? Click a quote below to use it as a starting point.</div>
+      <div class="quote-examples">
+        <div class="quote-example" onclick="useQuote(this)">
+          "We believe in the Autonomous Finance Vision of SAP and that the Financial Closing Assistant is going to help us accelerate the period-end close."
+          <span class="use-hint">↳ Use this quote</span>
+        </div>
+        <div class="quote-example" onclick="useQuote(this)">
+          "We are starting our journey to the Autonomous Enterprise and believe the Receivable Assistant can help us improve our DSO and resolve customer disputes faster."
+          <span class="use-hint">↳ Use this quote</span>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <form id="quoteForm" onsubmit="handleSubmit(event)" novalidate>
+
+        <div class="form-group">
+          <label for="quote">Your Quote <span class="required">*</span></label>
+          <textarea id="quote" name="quote" placeholder="Write your quote here, or click one of the examples above to start…" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="name">Your Name <span class="required">*</span></label>
+          <input type="text" id="name" name="name" placeholder="e.g. Jane Smith, CFO at Acme Corp" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address <span class="required">*</span></label>
+          <input type="email" id="email" name="email" placeholder="jane.smith@company.com" required />
+        </div>
+
+        <label class="checkbox-group" for="permission">
+          <input type="checkbox" id="permission" name="permission" />
+          <span class="checkbox-label">
+            <strong>I give SAP permission to use this quote publicly in marketing materials,</strong> including on the SAP website, social media, and events.
+          </span>
+        </label>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          Submit Quote
+        </button>
+
+        <p class="footer-note">Your submission is handled in accordance with SAP's privacy policy. Fields marked <span style="color:#bb0000;">*</span> are required.</p>
+      </form>
+    </div>
+
+    <!-- Success state -->
+    <div class="success-msg" id="successMsg">
+      <div class="check-icon">✓</div>
+      <h2>Almost there — please send the email!</h2>
+      <p>Your quote has been pre-filled in your email client. Just hit <strong>Send</strong> to deliver it to the SAP Finance AI team. We may be in touch if we'd like to feature your story.</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function useQuote(el) {
+    const text = el.innerText.replace('↳ Use this quote', '').trim();
+    document.getElementById('quote').value = text;
+    document.getElementById('quote').focus();
+    document.getElementById('quote').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+
+    const quote      = document.getElementById('quote').value.trim();
+    const name       = document.getElementById('name').value.trim();
+    const email      = document.getElementById('email').value.trim();
+    const permission = document.getElementById('permission').checked;
+
+    // Validation
+    if (!quote || !name || !email) {
+      alert('Please fill in all required fields before submitting.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    const permissionText = permission
+      ? 'YES — permission granted to use this quote publicly in marketing materials, including the SAP website, social media, and events.'
+      : 'NO — permission not granted for public use.';
+
+    const subject = encodeURIComponent('Customer Quote Submission – SAP Finance AI');
+    const body = encodeURIComponent(
+      'QUOTE\n' +
+      '─────────────────────────────────\n' +
+      quote + '\n\n' +
+      'SUBMITTER\n' +
+      '─────────────────────────────────\n' +
+      'Name:   ' + name + '\n' +
+      'Email:  ' + email + '\n\n' +
+      'MARKETING PERMISSION\n' +
+      '─────────────────────────────────\n' +
+      permissionText + '\n' +
+      '─────────────────────────────────\n' +
+      'Submitted via SAP Finance AI Quote Form'
+    );
+
+    const mailtoUrl = 'mailto:boes.schoonderwoerd@sap.com'
+      + '?cc=vishwesh.chougule@sap.com'
+      + '&subject=' + subject
+      + '&body=' + body;
+
+    window.location.href = mailtoUrl;
+
+    // Show success state after a brief delay (gives the mailto: time to launch)
+    setTimeout(function() {
+      document.getElementById('form-section').style.display = 'none';
+      document.getElementById('successMsg').style.display   = 'block';
+    }, 500);
+  }
+</script>
+</body>
+</html>
