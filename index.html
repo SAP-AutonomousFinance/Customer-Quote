@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Customer Quote Submission – SAP Finance AI</title>
 
-  <!-- No external dependencies — submissions open a pre-filled email via mailto: -->
+  <!-- Email delivery via FormSubmit (formsubmit.co) — no external JS libraries required -->
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -198,7 +198,7 @@
     }
     .checkbox-label strong { color: #32363a; }
 
-    /* Submit button states */
+    /* Submit button */
     .btn-submit {
       width: 100%;
       background: #0070f2;
@@ -312,7 +312,7 @@
 
       <hr class="divider" />
 
-      <form id="quoteForm" onsubmit="handleSubmit(event)" novalidate>
+      <form id="quoteForm" novalidate>
 
         <div class="form-group">
           <label for="quote">Your Quote <span class="required">*</span></label>
@@ -336,8 +336,11 @@
           </span>
         </label>
 
-        <button type="submit" class="btn-submit" id="submitBtn">
-          Submit Quote
+        <div class="error-banner" id="errorBanner"></div>
+
+        <button type="button" class="btn-submit" id="submitBtn" onclick="handleSubmit()">
+          <span id="btnLabel">Submit Quote</span>
+          <span class="spinner" id="btnSpinner"></span>
         </button>
 
         <p class="footer-note">Your submission is handled in accordance with SAP's privacy policy. Fields marked <span style="color:#bb0000;">*</span> are required.</p>
@@ -347,8 +350,8 @@
     <!-- Success state -->
     <div class="success-msg" id="successMsg">
       <div class="check-icon">✓</div>
-      <h2>Almost there — please send the email!</h2>
-      <p>Your quote has been pre-filled in your email client. Just hit <strong>Send</strong> to deliver it to the SAP Finance AI team. We may be in touch if we'd like to feature your story.</p>
+      <h2>Quote submitted — thank you!</h2>
+      <p>Your quote has been sent to the SAP Finance AI team. We may be in touch if we'd like to feature your story.</p>
     </div>
 
   </div>
@@ -362,8 +365,21 @@
     document.getElementById('quote').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  function handleSubmit(e) {
-    e.preventDefault();
+  function showError(msg) {
+    const banner = document.getElementById('errorBanner');
+    banner.textContent = msg;
+    banner.style.display = 'block';
+    banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function clearError() {
+    const banner = document.getElementById('errorBanner');
+    banner.style.display = 'none';
+    banner.textContent = '';
+  }
+
+  async function handleSubmit() {
+    clearError();
 
     const quote      = document.getElementById('quote').value.trim();
     const name       = document.getElementById('name').value.trim();
@@ -372,46 +388,59 @@
 
     // Validation
     if (!quote || !name || !email) {
-      alert('Please fill in all required fields before submitting.');
+      showError('Please fill in all required fields before submitting.');
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      alert('Please enter a valid email address.');
+      showError('Please enter a valid email address.');
       return;
     }
+
+    const btn     = document.getElementById('submitBtn');
+    const label   = document.getElementById('btnLabel');
+    const spinner = document.getElementById('btnSpinner');
+
+    btn.disabled        = true;
+    label.textContent   = 'Sending…';
+    spinner.style.display = 'inline-block';
 
     const permissionText = permission
       ? 'YES — permission granted to use this quote publicly in marketing materials, including the SAP website, social media, and events.'
       : 'NO — permission not granted for public use.';
 
-    const subject = encodeURIComponent('Customer Quote Submission – SAP Finance AI');
-    const body = encodeURIComponent(
-      'QUOTE\n' +
-      '─────────────────────────────────\n' +
-      quote + '\n\n' +
-      'SUBMITTER\n' +
-      '─────────────────────────────────\n' +
-      'Name:   ' + name + '\n' +
-      'Email:  ' + email + '\n\n' +
-      'MARKETING PERMISSION\n' +
-      '─────────────────────────────────\n' +
-      permissionText + '\n' +
-      '─────────────────────────────────\n' +
-      'Submitted via SAP Finance AI Quote Form'
-    );
+    const formData = new FormData();
+    formData.append('Quote',                quote);
+    formData.append('Name',                 name);
+    formData.append('Email',                email);
+    formData.append('Marketing Permission', permissionText);
+    formData.append('_subject',             'Customer Quote Submission – SAP Finance AI');
+    formData.append('_cc',                  'vishwesh.chougule@sap.com');
+    formData.append('_captcha',             'false');
+    formData.append('_template',            'table');
 
-    const mailtoUrl = 'mailto:boes.schoonderwoerd@sap.com'
-      + '?cc=vishwesh.chougule@sap.com'
-      + '&subject=' + subject
-      + '&body=' + body;
+    try {
+      const response = await fetch('https://formsubmit.co/ajax/boes.schoonderwoerd@sap.com', {
+        method:  'POST',
+        headers: { 'Accept': 'application/json' },
+        body:    formData
+      });
 
-    window.location.href = mailtoUrl;
-
-    // Show success state after a brief delay (gives the mailto: time to launch)
-    setTimeout(function() {
-      document.getElementById('form-section').style.display = 'none';
-      document.getElementById('successMsg').style.display   = 'block';
-    }, 500);
+      if (response.ok) {
+        document.getElementById('form-section').style.display = 'none';
+        document.getElementById('successMsg').style.display   = 'block';
+      } else {
+        const data = await response.json().catch(() => ({}));
+        showError(data.message || 'Submission failed. Please try again.');
+        btn.disabled          = false;
+        label.textContent     = 'Submit Quote';
+        spinner.style.display = 'none';
+      }
+    } catch (err) {
+      showError('Network error — please check your connection and try again.');
+      btn.disabled          = false;
+      label.textContent     = 'Submit Quote';
+      spinner.style.display = 'none';
+    }
   }
 </script>
 </body>
